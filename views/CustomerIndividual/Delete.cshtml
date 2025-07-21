@@ -1,0 +1,11 @@
+﻿@model CRMApp.Models.CustomerIndividual
+
+<h2>حذف مشتری حقیقی</h2>
+
+<p>آیا از حذف مشتری <strong>@Model.FirstName @Model.LastName</strong> اطمینان دارید؟</p>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="CustomerId" />
+    <button type="submit" class="btn btn-danger">حذف</button>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">بازگشت</a>
+</form>

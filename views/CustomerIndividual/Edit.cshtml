@@ -1,0 +1,86 @@
+﻿@model CRMApp.ViewModels.CustomerIndividualViewModel
+
+<h2>ویرایش مشتری حقیقی</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="CustomerId" />
+
+    <div><label>نام:</label> <input asp-for="FirstName" class="form-control" /></div>
+    <div><label>نام خانوادگی:</label> <input asp-for="LastName" class="form-control" /></div>
+    <div><label>نام پدر:</label> <input asp-for="FatherName" class="form-control" /></div>
+    <div><label>تاریخ تولد:</label> <input asp-for="BirthDate" type="date" class="form-control" /></div>
+    <div><label>کد ملی:</label> <input asp-for="NationalCode" class="form-control" /></div>
+    <div><label>شماره شناسنامه:</label> <input asp-for="IdentityNumber" class="form-control" /></div>
+    <div><label>جنسیت:</label> <input asp-for="Gender" class="form-control" /></div>
+    <div><label>وضعیت تاهل:</label> <input asp-for="MaritalStatus" class="form-control" /></div>
+
+    <h3>آدرس‌ها</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>آدرس کامل</th>
+                <th>شهر</th>
+                <th>استان</th>
+                <th>کدپستی</th>
+                <th>نوع آدرس</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Addresses.Count; i++)
+            {
+                <tr>
+                    <td><input asp-for="@Model.Addresses[i].FullAddress" class="form-control" /></td>
+                    <td><input asp-for="@Model.Addresses[i].City" class="form-control" /></td>
+                    <td><input asp-for="@Model.Addresses[i].Province" class="form-control" /></td>
+                    <td><input asp-for="@Model.Addresses[i].PostalCode" class="form-control" /></td>
+                    <td><input asp-for="@Model.Addresses[i].AddressType" class="form-control" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3>تلفن‌ها</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>شماره تلفن</th>
+                <th>نوع تلفن</th>
+                <th>داخلی</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.ContactPhones.Count; i++)
+            {
+                <tr>
+                    <td><input asp-for="@Model.ContactPhones[i].PhoneNumber" class="form-control" /></td>
+                    <td><input asp-for="@Model.ContactPhones[i].PhoneType" class="form-control" /></td>
+                    <td><input asp-for="@Model.ContactPhones[i].Extension" class="form-control" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3>ایمیل‌ها</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>آدرس ایمیل</th>
+                <th>نوع ایمیل</th>
+                <th>اصلی</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Emails.Count; i++)
+            {
+                <tr>
+                    <td><input asp-for="@Model.Emails[i].EmailAddress" class="form-control" /></td>
+                    <td><input asp-for="@Model.Emails[i].EmailType" class="form-control" /></td>
+                    <td><input asp-for="@Model.Emails[i].IsPrimary" type="checkbox" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-success">ذخیره</button>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">بازگشت</a>
+</form>

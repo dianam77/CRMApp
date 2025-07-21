@@ -1,0 +1,93 @@
+﻿@model IEnumerable<CRMApp.Models.CustomerIndividual>
+
+<h2>لیست مشتریان حقیقی</h2>
+
+@if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+{
+    <a class="btn btn-primary mb-3" href="@Url.Action("Create")">افزودن مشتری جدید</a>
+}
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>نام</th>
+            <th>نام خانوادگی</th>
+            <th>کد ملی</th>
+            <th>تاریخ تولد</th>
+            <th>آدرس‌ها</th>
+            <th>تلفن‌ها</th>
+            <th>ایمیل‌ها</th>
+            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                <th>عملیات</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.FirstName</td>
+                <td>@item.LastName</td>
+                <td>@item.NationalCode</td>
+                <td>@item.BirthDate?.ToString("yyyy/MM/dd")</td>
+
+                <td>
+                    @if (item.Addresses != null && item.Addresses.Any())
+                    {
+                        <ul>
+                            @foreach (var addr in item.Addresses)
+                            {
+                                <li>@addr.FullAddress</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <span>ندارد</span>
+                    }
+                </td>
+
+                <td>
+                    @if (item.ContactPhones != null && item.ContactPhones.Any())
+                    {
+                        <ul>
+                            @foreach (var phone in item.ContactPhones)
+                            {
+                                <li>@phone.PhoneNumber</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <span>ندارد</span>
+                    }
+                </td>
+
+                <td>
+                    @if (item.Emails != null && item.Emails.Any())
+                    {
+                        <ul>
+                            @foreach (var email in item.Emails)
+                            {
+                                <li>@email.EmailAddress</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <span>ندارد</span>
+                    }
+                </td>
+
+                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    <td>
+                        <a class="btn btn-sm btn-warning" href="@Url.Action("Edit", new { id = item.CustomerId })">ویرایش</a>
+                        <a class="btn btn-sm btn-danger" href="@Url.Action("Delete", new { id = item.CustomerId })">حذف</a>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

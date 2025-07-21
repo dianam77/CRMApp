@@ -1,0 +1,21 @@
+﻿@model CRMApp.Models.CustomerCompany
+
+<h2>حذف شرکت</h2>
+
+<p>آیا از حذف شرکت زیر مطمئن هستید؟</p>
+
+<div>
+    <strong>نام شرکت:</strong> @Model.CompanyName <br />
+    <strong>کد اقتصادی:</strong> @Model.EconomicCode <br />
+    <strong>شناسه ملی:</strong> @Model.NationalId <br />
+    <strong>شماره ثبت:</strong> @Model.RegisterNumber <br />
+    <strong>تاریخ تأسیس:</strong> @(Model.EstablishmentDate?.ToString("yyyy/MM/dd") ?? "-") <br />
+    <strong>حوزه فعالیت:</strong> @Model.IndustryField <br />
+    <strong>وبسایت:</strong> @Model.Website
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="CustomerId" />
+    <button type="submit" class="btn btn-danger">حذف</button>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">انصراف</a>
+</form>
