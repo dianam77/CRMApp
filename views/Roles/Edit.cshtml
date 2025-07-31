@@ -1,0 +1,39 @@
+﻿@model CRMApp.ViewModels.RoleEditViewModel
+
+@{
+    ViewData["Title"] = "ویرایش نقش";
+}
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="RoleId" />
+
+    <div class="mb-3">
+        <label asp-for="RoleName" class="form-label">نام نقش</label>
+        <input asp-for="RoleName" class="form-control" />
+        <span asp-validation-for="RoleName" class="text-danger"></span>
+    </div>
+
+    <h4>کاربران مرتبط با نقش</h4>
+    <div class="form-group mb-3">
+        @for (int i = 0; i < Model.Users.Count; i++)
+        {
+            <div class="form-check">
+                <input asp-for="Users[i].IsSelected" class="form-check-input" id="Users_@(i)__IsSelected" />
+                <label class="form-check-label" for="Users_@(i)__IsSelected">
+                    @Model.Users[i].UserName
+                </label>
+                <input type="hidden" asp-for="Users[i].UserId" />
+                <input type="hidden" asp-for="Users[i].UserName" />
+            </div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary">ذخیره</button>
+    <a asp-action="Manage" class="btn btn-secondary ms-2">بازگشت</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

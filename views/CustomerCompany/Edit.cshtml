@@ -1,49 +1,48 @@
 ﻿@model CRMApp.ViewModels.CompanyEditViewModel
 
-
 <h2>ویرایش شرکت</h2>
 
 <form asp-action="Edit" method="post" class="mt-4">
     <input type="hidden" asp-for="CustomerId" />
 
     <div class="form-group mb-3">
-        <label asp-for="CompanyName"></label>
+        <label asp-for="CompanyName">نام شرکت</label>
         <input asp-for="CompanyName" class="form-control" />
         <span asp-validation-for="CompanyName" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
-        <label asp-for="EconomicCode"></label>
+        <label asp-for="EconomicCode">کد اقتصادی</label>
         <input asp-for="EconomicCode" class="form-control" />
         <span asp-validation-for="EconomicCode" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
-        <label asp-for="NationalId"></label>
+        <label asp-for="NationalId">شناسه ملی</label>
         <input asp-for="NationalId" class="form-control" />
         <span asp-validation-for="NationalId" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
-        <label asp-for="RegisterNumber"></label>
+        <label asp-for="RegisterNumber">شماره ثبت</label>
         <input asp-for="RegisterNumber" class="form-control" />
         <span asp-validation-for="RegisterNumber" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
-        <label asp-for="EstablishmentDate"></label>
+        <label asp-for="EstablishmentDate">تاریخ تأسیس</label>
         <input asp-for="EstablishmentDate" type="date" class="form-control" />
         <span asp-validation-for="EstablishmentDate" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
-        <label asp-for="IndustryField"></label>
+        <label asp-for="IndustryField">حوزه فعالیت</label>
         <input asp-for="IndustryField" class="form-control" />
         <span asp-validation-for="IndustryField" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
-        <label asp-for="Website"></label>
+        <label asp-for="Website">وبسایت</label>
         <input asp-for="Website" class="form-control" />
         <span asp-validation-for="Website" class="text-danger"></span>
     </div>
@@ -56,17 +55,16 @@
         <div class="border p-2 mb-2">
             <input type="hidden" asp-for="Emails[i].EmailId" />
             <div class="form-group">
-                <label asp-for="Emails[i].EmailAddress"></label>
+                <label asp-for="Emails[i].EmailAddress">آدرس ایمیل</label>
                 <input asp-for="Emails[i].EmailAddress" class="form-control" />
                 <span asp-validation-for="Emails[i].EmailAddress" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Emails[i].EmailType"></label>
+                <label asp-for="Emails[i].EmailType">نوع ایمیل</label>
                 <input asp-for="Emails[i].EmailType" class="form-control" />
                 <span asp-validation-for="Emails[i].EmailType" class="text-danger"></span>
             </div>
             <div class="form-group form-check">
-                @* اضافه کردن hidden برای ارسال مقدار false وقتی چک‌باکس تیک نخورده *@
                 <input type="hidden" asp-for="Emails[i].IsPrimary" value="false" />
                 <input asp-for="Emails[i].IsPrimary" class="form-check-input" />
                 <label asp-for="Emails[i].IsPrimary" class="form-check-label">ایمیل اصلی</label>
@@ -80,17 +78,17 @@
         <div class="border p-2 mb-2">
             <input type="hidden" asp-for="ContactPhones[i].PhoneId" />
             <div class="form-group">
-                <label asp-for="ContactPhones[i].PhoneNumber"></label>
+                <label asp-for="ContactPhones[i].PhoneNumber">شماره تلفن</label>
                 <input asp-for="ContactPhones[i].PhoneNumber" class="form-control" />
                 <span asp-validation-for="ContactPhones[i].PhoneNumber" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="ContactPhones[i].PhoneType"></label>
+                <label asp-for="ContactPhones[i].PhoneType">نوع تلفن</label>
                 <input asp-for="ContactPhones[i].PhoneType" class="form-control" />
                 <span asp-validation-for="ContactPhones[i].PhoneType" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="ContactPhones[i].Extension"></label>
+                <label asp-for="ContactPhones[i].Extension">داخلی</label>
                 <input asp-for="ContactPhones[i].Extension" class="form-control" />
                 <span asp-validation-for="ContactPhones[i].Extension" class="text-danger"></span>
             </div>
@@ -103,29 +101,65 @@
         <div class="border p-2 mb-2">
             <input type="hidden" asp-for="Addresses[i].AddressId" />
             <div class="form-group">
-                <label asp-for="Addresses[i].FullAddress"></label>
+                <label asp-for="Addresses[i].FullAddress">آدرس کامل</label>
                 <input asp-for="Addresses[i].FullAddress" class="form-control" />
                 <span asp-validation-for="Addresses[i].FullAddress" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Addresses[i].City"></label>
+                <label asp-for="Addresses[i].City">شهر</label>
                 <input asp-for="Addresses[i].City" class="form-control" />
                 <span asp-validation-for="Addresses[i].City" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Addresses[i].Province"></label>
+                <label asp-for="Addresses[i].Province">استان</label>
                 <input asp-for="Addresses[i].Province" class="form-control" />
                 <span asp-validation-for="Addresses[i].Province" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Addresses[i].PostalCode"></label>
+                <label asp-for="Addresses[i].PostalCode">کد پستی</label>
                 <input asp-for="Addresses[i].PostalCode" class="form-control" />
                 <span asp-validation-for="Addresses[i].PostalCode" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Addresses[i].AddressType"></label>
+                <label asp-for="Addresses[i].AddressType">نوع آدرس</label>
                 <input asp-for="Addresses[i].AddressType" class="form-control" />
                 <span asp-validation-for="Addresses[i].AddressType" class="text-danger"></span>
+            </div>
+        </div>
+    }
+
+    <hr />
+
+    <h4>رابطه‌ها با مشتریان حقیقی</h4>
+    @for (int i = 0; i < Model.Relations.Count; i++)
+    {
+        <div class="border p-3 mb-3">
+            <input type="hidden" asp-for="Relations[i].RelationId" />
+
+            <div class="form-group mb-2">
+                <label>مشتری حقیقی:</label>
+                <select asp-for="Relations[i].IndividualCustomerId" class="form-control" asp-items="@(new SelectList(Model.IndividualCustomers, "CustomerId", "FullName"))">
+                    <option value="">انتخاب کنید</option>
+                </select>
+                <span asp-validation-for="Relations[i].IndividualCustomerId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label>نوع رابطه:</label>
+                <input asp-for="Relations[i].RelationType" class="form-control" />
+                <span asp-validation-for="Relations[i].RelationType" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label>تاریخ شروع رابطه:</label>
+                <input asp-for="Relations[i].RelationStartDate" type="date" class="form-control" />
+                <span asp-validation-for="Relations[i].RelationStartDate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label>توضیحات رابطه:</label>
+                <textarea asp-for="Relations[i].RelationDescription" class="form-control"></textarea>
+                <span asp-validation-for="Relations[i].RelationDescription" class="text-danger"></span>
             </div>
         </div>
     }

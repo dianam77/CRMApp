@@ -1,43 +1,63 @@
 ﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Dashboard";
 }
 
-<h2>داشبورد</h2>
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">داشبورد</h5>
+            </div>
+            <div class="card-body">
+                <p>خوش آمدید، <strong>@User.Identity.Name</strong></p>
 
-<p>خوش آمدید، @User.Identity.Name</p>
+                <form asp-action="Logout" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger btn-sm">خروج</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-<form asp-action="Logout" method="post" style="display:inline;">
-    <button type="submit" class="btn btn-warning">خروج</button>
-    @Html.AntiForgeryToken()
-</form>
-
-@if (User.IsInRole("Admin"))
-{
-    <h3>مدیریت کامل سیستم (ادمین)</h3>
-    <ul>
-        <li><a href="/Home/Register">ثبت نام کاربران</a></li>
-        <li><a href="/Roles/Manage">مدیریت نقش‌ها</a></li>
-        <li><a href="/CustomerIndividual">مدیریت مشتریان فردی</a></li>
-        <li><a href="/CustomerCompany">مدیریت مشتریان شرکتی</a></li>
-    </ul>
-}
-else if (User.IsInRole("Manager"))
-{
-    <h3>مدیریت کلی (Manager)</h3>
-    <ul>
-        <li><a href="/CustomerIndividual">مشتریان فردی</a></li>
-        <li><a href="/CustomerCompany">مشتریان شرکتی</a></li>
-    </ul>
-}
-else if (User.IsInRole("User"))
-{
-    <h3>مشاهده جداول (User)</h3>
-    <ul>
-        <li><a href="/CustomerIndividual">مشاهده مشتریان فردی</a></li>
-        <li><a href="/CustomerCompany">مشاهده مشتریان شرکتی</a></li>
-    </ul>
-}
-else
-{
-    <p>شما به هیچ بخشی دسترسی ندارید.</p>
-}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-start-primary">
+            <div class="card-body">
+                @if (User.IsInRole("Admin"))
+                {
+                    <h5 class="card-title text-primary">مدیریت کامل سیستم (ادمین)</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><a href="/Home/Register">ثبت نام کاربران</a></li>
+                        <li class="list-group-item"><a href="/Roles/Manage">مدیریت نقش‌ها</a></li>
+                        <li class="list-group-item"><a href="/CustomerIndividual">مدیریت مشتریان فردی</a></li>
+                        <li class="list-group-item"><a href="/CustomerCompany">مدیریت مشتریان شرکتی</a></li>
+                    </ul>
+                }
+                else if (User.IsInRole("Manager"))
+                {
+                    <h5 class="card-title text-info">مدیریت کلی (Manager)</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><a href="/CustomerIndividual">مشتریان فردی</a></li>
+                        <li class="list-group-item"><a href="/CustomerCompany">مشتریان شرکتی</a></li>
+                    </ul>
+                }
+                else if (User.IsInRole("User"))
+                {
+                    <h5 class="card-title text-secondary">مشاهده جداول (User)</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><a href="/CustomerIndividual">مشاهده مشتریان فردی</a></li>
+                        <li class="list-group-item"><a href="/CustomerCompany">مشاهده مشتریان شرکتی</a></li>
+                    </ul>
+                }
+                else
+                {
+                    <div class="alert alert-warning" role="alert">
+                        شما به هیچ بخشی دسترسی ندارید.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

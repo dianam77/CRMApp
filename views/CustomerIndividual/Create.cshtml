@@ -1,101 +1,131 @@
 ﻿@model CRMApp.ViewModels.CustomerIndividualViewModel
 
-@{
-    ViewData["Title"] = "افزودن مشتری حقیقی";
-}
-
-<h2>@ViewData["Title"]</h2>
+<h2>ثبت مشتری حقیقی</h2>
 
 <form asp-action="Create" method="post">
-    <div>
-        <label asp-for="FirstName"></label>
-        <input asp-for="FirstName" />
-        <span asp-validation-for="FirstName" class="text-danger"></span>
-    </div>
-    <div>
-        <label asp-for="LastName"></label>
-        <input asp-for="LastName" />
-        <span asp-validation-for="LastName" class="text-danger"></span>
-    </div>
-    <div>
-        <label asp-for="FatherName"></label>
-        <input asp-for="FatherName" />
-        <span asp-validation-for="FatherName" class="text-danger"></span>
-    </div>
-    <div>
-        <label asp-for="BirthDate"></label>
-        <input asp-for="BirthDate" type="date" />
-        <span asp-validation-for="BirthDate" class="text-danger"></span>
-    </div>
-    <div>
-        <label asp-for="NationalCode"></label>
-        <input asp-for="NationalCode" />
-        <span asp-validation-for="NationalCode" class="text-danger"></span>
-    </div>
-    <div>
-        <label asp-for="IdentityNumber"></label>
-        <input asp-for="IdentityNumber" />
-        <span asp-validation-for="IdentityNumber" class="text-danger"></span>
-    </div>
-    <div>
-        <label asp-for="Gender"></label>
-        <input asp-for="Gender" />
-        <span asp-validation-for="Gender" class="text-danger"></span>
-    </div>
-    <div>
-        <label asp-for="MaritalStatus"></label>
-        <input asp-for="MaritalStatus" />
-        <span asp-validation-for="MaritalStatus" class="text-danger"></span>
-    </div>
+    @Html.AntiForgeryToken()
 
-    <hr />
-    <h3>ایمیل‌ها</h3>
-    @for (int i = 0; i < Model.Emails.Count; i++)
-    {
-        <div>
-            <label>آدرس ایمیل:</label>
-            <input asp-for="@Model.Emails[i].EmailAddress" />
-            <label>نوع ایمیل:</label>
-            <input asp-for="@Model.Emails[i].EmailType" />
-            <label>اصلی:</label>
-            <input asp-for="@Model.Emails[i].IsPrimary" type="checkbox" />
-        </div>
-    }
-    <hr />
-    <h3>تلفن‌ها</h3>
-    @for (int i = 0; i < Model.ContactPhones.Count; i++)
-    {
-        <div>
-            <label>شماره تلفن:</label>
-            <input asp-for="@Model.ContactPhones[i].PhoneNumber" />
-            <label>نوع تلفن:</label>
-            <input asp-for="@Model.ContactPhones[i].PhoneType" />
-            <label>داخلی:</label>
-            <input asp-for="@Model.ContactPhones[i].Extension" />
-        </div>
-    }
-    <hr />
-    <h3>آدرس‌ها</h3>
-    @for (int i = 0; i < Model.Addresses.Count; i++)
-    {
-        <div>
-            <label>آدرس کامل:</label>
-            <input asp-for="@Model.Addresses[i].FullAddress" />
-            <label>شهر:</label>
-            <input asp-for="@Model.Addresses[i].City" />
-            <label>استان:</label>
-            <input asp-for="@Model.Addresses[i].Province" />
-            <label>کد پستی:</label>
-            <input asp-for="@Model.Addresses[i].PostalCode" />
-            <label>نوع آدرس:</label>
-            <input asp-for="@Model.Addresses[i].AddressType" />
-        </div>
-    }
+    <fieldset>
+        <legend>اطلاعات فردی</legend>
 
-    <button type="submit">ثبت</button>
+        <div>
+            <label asp-for="FirstName"></label>
+            <input asp-for="FirstName" required />
+        </div>
+
+        <div>
+            <label asp-for="LastName"></label>
+            <input asp-for="LastName" required />
+        </div>
+
+        <div>
+            <label asp-for="FatherName"></label>
+            <input asp-for="FatherName" />
+        </div>
+
+        <div>
+            <label asp-for="BirthDate"></label>
+            <input asp-for="BirthDate" type="date" />
+        </div>
+
+        <div>
+            <label asp-for="NationalCode"></label>
+            <input asp-for="NationalCode" />
+        </div>
+
+        <div>
+            <label asp-for="IdentityNumber"></label>
+            <input asp-for="IdentityNumber" />
+        </div>
+
+        <div>
+            <label asp-for="Gender"></label>
+            <select asp-for="Gender" asp-items="Model.GenderList">
+                <option value="">-- انتخاب کنید --</option>
+            </select>
+        </div>
+
+        <div>
+            <label asp-for="MaritalStatus"></label>
+            <select asp-for="MaritalStatus" asp-items="Model.MaritalStatusList">
+                <option value="">-- انتخاب کنید --</option>
+            </select>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>ایمیل‌ها</legend>
+        <table>
+            <thead>
+                <tr>
+                    <th>آدرس ایمیل</th>
+                    <th>نوع ایمیل</th>
+                    <th>ایمیل اصلی</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Emails.Count; i++)
+                {
+                    <tr>
+                        <td><input asp-for="Emails[@i].EmailAddress" /></td>
+                        <td><input asp-for="Emails[@i].EmailType" /></td>
+                        <td><input asp-for="Emails[@i].IsPrimary" type="checkbox" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </fieldset>
+
+    <fieldset>
+        <legend>شماره‌های تماس</legend>
+        <table>
+            <thead>
+                <tr>
+                    <th>شماره تلفن</th>
+                    <th>نوع تلفن</th>
+                    <th>شماره داخلی</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.ContactPhones.Count; i++)
+                {
+                    <tr>
+                        <td><input asp-for="ContactPhones[@i].PhoneNumber" /></td>
+                        <td><input asp-for="ContactPhones[@i].PhoneType" /></td>
+                        <td><input asp-for="ContactPhones[@i].Extension" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </fieldset>
+
+    <fieldset>
+        <legend>آدرس‌ها</legend>
+        <table>
+            <thead>
+                <tr>
+                    <th>آدرس کامل</th>
+                    <th>شهر</th>
+                    <th>استان</th>
+                    <th>کد پستی</th>
+                    <th>نوع آدرس</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Addresses.Count; i++)
+                {
+                    <tr>
+                        <td><input asp-for="Addresses[@i].FullAddress" /></td>
+                        <td><input asp-for="Addresses[@i].City" /></td>
+                        <td><input asp-for="Addresses[@i].Province" /></td>
+                        <td><input asp-for="Addresses[@i].PostalCode" /></td>
+                        <td><input asp-for="Addresses[@i].AddressType" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </fieldset>
+
+    <button type="submit">ثبت مشتری</button>
     <a asp-action="Index">بازگشت</a>
 </form>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

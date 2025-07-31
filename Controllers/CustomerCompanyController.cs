@@ -72,6 +72,15 @@ namespace CRMApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CompanyCreateViewModel vm)
         {
+            // فقط آیتم‌های دارای مقدار معتبر را نگه دار
+            vm.Emails = vm.Emails?.Where(e => !string.IsNullOrWhiteSpace(e.EmailAddress)).ToList();
+            vm.ContactPhones = vm.ContactPhones?.Where(p => !string.IsNullOrWhiteSpace(p.PhoneNumber)).ToList();
+            vm.Addresses = vm.Addresses?.Where(a => !string.IsNullOrWhiteSpace(a.FullAddress)).ToList();
+
+            ClearModelStateForList("Emails", vm.Emails?.Count ?? 0);
+            ClearModelStateForList("ContactPhones", vm.ContactPhones?.Count ?? 0);
+            ClearModelStateForList("Addresses", vm.Addresses?.Count ?? 0);
+
             if (!ModelState.IsValid)
             {
                 await PopulateIndividuals(vm);
@@ -92,7 +101,20 @@ namespace CRMApp.Controllers
             _context.CustomerCompanies.Add(company);
             await _context.SaveChangesAsync();
 
-            await AddRelationAsync(company.CustomerId, vm);
+            if (vm.SelectedIndividualCustomerId.HasValue && vm.SelectedIndividualCustomerId.Value > 0)
+            {
+                var relation = new CustomerCompanyRelation
+                {
+                    CompanyCustomerId = company.CustomerId,
+                    IndividualCustomerId = vm.SelectedIndividualCustomerId.Value,
+                    RelationType = vm.RelationType,
+                    StartDate = vm.RelationStartDate,
+                    Description = vm.RelationDescription
+                };
+                _context.CustomerCompanyRelations.Add(relation);
+                await _context.SaveChangesAsync();
+            }
+
             await AddEmailsAsync(company.CustomerId, vm.Emails);
             await AddPhonesAsync(company.CustomerId, vm.ContactPhones);
             await AddAddressesAsync(company.CustomerId, vm.Addresses);
@@ -106,9 +128,66 @@ namespace CRMApp.Controllers
                 .Include(c => c.Emails)
                 .Include(c => c.ContactPhones)
                 .Include(c => c.Addresses)
+                .Include(c => c.CustomerCompanyRelations)
+                    .ThenInclude(r => r.IndividualCustomer)
                 .FirstOrDefaultAsync(c => c.CustomerId == id);
 
             if (company == null) return NotFound();
+
+            var individualCustomers = await _context.CustomerIndividuals
+                .Select(ic => new IndividualCustomer
+                {
+                    CustomerId = ic.CustomerId,
+                    FullName = $"{ic.FirstName} {ic.LastName}"
+                }).ToListAsync();
+
+            var emails = company.Emails?.Select(e => new EmailViewModel
+            {
+                EmailId = e.EmailId,
+                EmailAddress = e.EmailAddress,
+                EmailType = e.EmailType,
+                IsPrimary = e.IsPrimary
+            }).ToList() ?? new List<EmailViewModel>();
+
+            var phones = company.ContactPhones?.Select(p => new PhoneViewModel
+            {
+                PhoneId = p.PhoneId,
+                PhoneNumber = p.PhoneNumber,
+                PhoneType = p.PhoneType,
+                Extension = p.Extension
+            }).ToList() ?? new List<PhoneViewModel>();
+
+            var addresses = company.Addresses?.Select(a => new AddressViewModel
+            {
+                AddressId = a.AddressId,
+                FullAddress = a.FullAddress,
+                City = a.City,
+                Province = a.Province,
+                PostalCode = a.PostalCode,
+                AddressType = a.AddressType
+            }).ToList() ?? new List<AddressViewModel>();
+
+            if (!emails.Any())
+                emails.Add(new EmailViewModel());
+
+            if (!phones.Any())
+                phones.Add(new PhoneViewModel());
+
+            if (!addresses.Any())
+                addresses.Add(new AddressViewModel());
+
+            var relations = company.CustomerCompanyRelations?.Select(r => new CustomerCompanyRelationViewModel
+            {
+                RelationId = r.RelationId,
+                IndividualCustomerId = r.IndividualCustomerId,
+                RelationType = r.RelationType,
+                RelationStartDate = r.StartDate,
+                RelationDescription = r.Description
+            }).ToList() ?? new List<CustomerCompanyRelationViewModel>();
+
+            // **اینجا مشکل حل شده: اگر روابط نال یا خالی بود، یک رکورد خالی اضافه کن**
+            if (!relations.Any())
+                relations.Add(new CustomerCompanyRelationViewModel());
 
             var vm = new CompanyEditViewModel
             {
@@ -120,29 +199,13 @@ namespace CRMApp.Controllers
                 EstablishmentDate = company.EstablishmentDate,
                 IndustryField = company.IndustryField,
                 Website = company.Website,
-                Emails = company.Emails.Select(e => new EmailViewModel
-                {
-                    EmailId = e.EmailId,
-                    EmailAddress = e.EmailAddress,
-                    EmailType = e.EmailType,
-                    IsPrimary = e.IsPrimary
-                }).ToList(),
-                ContactPhones = company.ContactPhones.Select(p => new PhoneViewModel
-                {
-                    PhoneId = p.PhoneId,
-                    PhoneNumber = p.PhoneNumber,
-                    PhoneType = p.PhoneType,
-                    Extension = p.Extension
-                }).ToList(),
-                Addresses = company.Addresses.Select(a => new AddressViewModel
-                {
-                    AddressId = a.AddressId,
-                    FullAddress = a.FullAddress,
-                    City = a.City,
-                    Province = a.Province,
-                    PostalCode = a.PostalCode,
-                    AddressType = a.AddressType
-                }).ToList()
+
+                Emails = emails,
+                ContactPhones = phones,
+                Addresses = addresses,
+
+                Relations = relations,
+                IndividualCustomers = individualCustomers
             };
 
             return View(vm);
@@ -154,6 +217,28 @@ namespace CRMApp.Controllers
         {
             if (id != vm.CustomerId) return NotFound();
 
+            // اطمینان از مقداردهی لیست‌ها
+            vm.Emails ??= new List<EmailViewModel>();
+            vm.ContactPhones ??= new List<PhoneViewModel>();
+            vm.Addresses ??= new List<AddressViewModel>();
+            vm.Relations ??= new List<CustomerCompanyRelationViewModel>();
+
+            // فقط موارد دارای مقدار معتبر نگهداری می‌شوند
+            vm.Emails = vm.Emails.Where(e => !string.IsNullOrWhiteSpace(e.EmailAddress)).ToList();
+            vm.ContactPhones = vm.ContactPhones.Where(p => !string.IsNullOrWhiteSpace(p.PhoneNumber)).ToList();
+            vm.Addresses = vm.Addresses.Where(a => !string.IsNullOrWhiteSpace(a.FullAddress)).ToList();
+            vm.Relations = vm.Relations.Where(r => r.IndividualCustomerId.HasValue).ToList();
+
+            ClearModelStateForList("Emails", vm.Emails.Count);
+            ClearModelStateForList("ContactPhones", vm.ContactPhones.Count);
+            ClearModelStateForList("Addresses", vm.Addresses.Count);
+            ClearModelStateForList("Relations", vm.Relations.Count);
+
+            if (string.IsNullOrWhiteSpace(vm.CompanyName))
+            {
+                ModelState.AddModelError(nameof(vm.CompanyName), "نام شرکت باید وارد شود.");
+            }
+
             if (!ModelState.IsValid)
                 return View(vm);
 
@@ -161,235 +246,240 @@ namespace CRMApp.Controllers
                 .Include(c => c.Emails)
                 .Include(c => c.ContactPhones)
                 .Include(c => c.Addresses)
+                .Include(c => c.CustomerCompanyRelations)
                 .FirstOrDefaultAsync(c => c.CustomerId == id);
 
             if (company == null) return NotFound();
 
             company.CompanyName = vm.CompanyName;
-            company.EconomicCode = vm.EconomicCode;
-            company.NationalId = vm.NationalId;
-            company.RegisterNumber = vm.RegisterNumber;
-            company.EstablishmentDate = vm.EstablishmentDate;
-            company.IndustryField = vm.IndustryField;
-            company.Website = vm.Website;
 
-            UpdateEmails(company, vm.Emails);
-            UpdatePhones(company, vm.ContactPhones);
-            UpdateAddresses(company, vm.Addresses);
+            if (!string.IsNullOrWhiteSpace(vm.EconomicCode))
+                company.EconomicCode = vm.EconomicCode;
+
+            if (!string.IsNullOrWhiteSpace(vm.NationalId))
+                company.NationalId = vm.NationalId;
+
+            if (!string.IsNullOrWhiteSpace(vm.RegisterNumber))
+                company.RegisterNumber = vm.RegisterNumber;
+
+            if (vm.EstablishmentDate.HasValue)
+                company.EstablishmentDate = vm.EstablishmentDate;
+
+            if (!string.IsNullOrWhiteSpace(vm.IndustryField))
+                company.IndustryField = vm.IndustryField;
+
+            if (!string.IsNullOrWhiteSpace(vm.Website))
+                company.Website = vm.Website;
+
+            // حذف همه اطلاعات قبلی و جایگزینی
+            _context.Emails.RemoveRange(company.Emails);
+            _context.ContactPhones.RemoveRange(company.ContactPhones);
+            _context.Addresses.RemoveRange(company.Addresses);
+            _context.CustomerCompanyRelations.RemoveRange(company.CustomerCompanyRelations);
+
+            await AddEmailsAsync(company.CustomerId, vm.Emails);
+            await AddPhonesAsync(company.CustomerId, vm.ContactPhones);
+            await AddAddressesAsync(company.CustomerId, vm.Addresses);
+
+            foreach (var relationVm in vm.Relations)
+            {
+                if (relationVm.IndividualCustomerId.HasValue && relationVm.IndividualCustomerId.Value > 0)
+                {
+                    var relation = new CustomerCompanyRelation
+                    {
+                        CompanyCustomerId = company.CustomerId,
+                        IndividualCustomerId = relationVm.IndividualCustomerId.Value,
+                        RelationType = relationVm.RelationType,
+                        StartDate = relationVm.RelationStartDate,
+                        Description = relationVm.RelationDescription
+                    };
+                    _context.CustomerCompanyRelations.Add(relation);
+                }
+            }
 
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
-
         public async Task<IActionResult> Delete(int id)
         {
             var company = await _context.CustomerCompanies.FirstOrDefaultAsync(c => c.CustomerId == id);
-            return company == null ? NotFound() : View(company);
-        }
+            if (company == null) return NotFound();
 
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var company = await _context.CustomerCompanies
-                .Include(c => c.Emails)
-                .Include(c => c.ContactPhones)
-                .Include(c => c.Addresses)
-                .FirstOrDefaultAsync(c => c.CustomerId == id);
-
-            if (company != null)
-            {
-                _context.Emails.RemoveRange(company.Emails);
-                _context.ContactPhones.RemoveRange(company.ContactPhones);
-                _context.Addresses.RemoveRange(company.Addresses);
-                _context.CustomerCompanies.Remove(company);
-                await _context.SaveChangesAsync();
-            }
+            _context.CustomerCompanies.Remove(company);
+            await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }
 
-        private bool CompanyExists(int id) =>
-            _context.CustomerCompanies.Any(e => e.CustomerId == id);
+        #region Helper Methods
 
         private async Task PopulateIndividuals(CompanyCreateViewModel vm)
         {
-            vm.IndividualCustomers = await _context.CustomerIndividuals
-                .Select(c => new IndividualCustomer
+            var individuals = await _context.CustomerIndividuals.ToListAsync();
+
+            vm.IndividualCustomers = individuals.Any()
+                ? individuals.Select(c => new IndividualCustomer
                 {
                     CustomerId = c.CustomerId,
                     FullName = $"{c.FirstName} {c.LastName}"
-                }).ToListAsync();
+                }).ToList()
+                : new List<IndividualCustomer> { new IndividualCustomer { CustomerId = 0, FullName = "هیچ مشتری حقیقی موجود نیست" } };
         }
 
-        private async Task AddRelationAsync(int companyId, CompanyCreateViewModel vm)
+        private void ClearModelStateForList(string listName, int validCount)
         {
-            if (vm.SelectedIndividualCustomerId.GetValueOrDefault() > 0)
+            for (int i = validCount; ; i++)
             {
-                var relation = new CustomerCompanyRelation
+                var prefix = $"{listName}[{i}]";
+                var keys = ModelState.Keys.Where(k => k.StartsWith(prefix)).ToList();
+                if (!keys.Any()) break;
+                foreach (var key in keys)
                 {
-                    CompanyCustomerId = companyId,
-                    IndividualCustomerId = vm.SelectedIndividualCustomerId.Value,
-                    RelationType = vm.RelationType,
-                    StartDate = vm.RelationStartDate,
-                    Description = vm.RelationDescription
-                };
-                _context.CustomerCompanyRelations.Add(relation);
-                await _context.SaveChangesAsync();
+                    ModelState.Remove(key);
+                }
+            }
+        }
+
+        private void UpdateEmails(CustomerCompany company, List<EmailViewModel> emails)
+        {
+            // حذف ایمیل‌های حذف شده
+            var toRemove = company.Emails.Where(e => !emails.Any(vm => vm.EmailId == e.EmailId)).ToList();
+            _context.Emails.RemoveRange(toRemove);
+
+            // اضافه یا ویرایش ایمیل‌ها
+            foreach (var emailVm in emails)
+            {
+                var email = company.Emails.FirstOrDefault(e => e.EmailId == emailVm.EmailId);
+                if (email == null)
+                {
+                    // اضافه جدید
+                    company.Emails.Add(new Email
+                    {
+                        EmailAddress = emailVm.EmailAddress,
+                        EmailType = emailVm.EmailType,
+                        IsPrimary = emailVm.IsPrimary
+                    });
+                }
+                else
+                {
+                    // ویرایش
+                    email.EmailAddress = emailVm.EmailAddress;
+                    email.EmailType = emailVm.EmailType;
+                    email.IsPrimary = emailVm.IsPrimary;
+                }
+            }
+        }
+
+        private void UpdatePhones(CustomerCompany company, List<PhoneViewModel> phones)
+        {
+            var toRemove = company.ContactPhones.Where(p => !phones.Any(vm => vm.PhoneId == p.PhoneId)).ToList();
+            _context.ContactPhones.RemoveRange(toRemove);
+
+            foreach (var phoneVm in phones)
+            {
+                var phone = company.ContactPhones.FirstOrDefault(p => p.PhoneId == phoneVm.PhoneId);
+                if (phone == null)
+                {
+                    company.ContactPhones.Add(new ContactPhone
+                    {
+                        PhoneNumber = phoneVm.PhoneNumber,
+                        PhoneType = phoneVm.PhoneType,
+                        Extension = phoneVm.Extension
+                    });
+                }
+                else
+                {
+                    phone.PhoneNumber = phoneVm.PhoneNumber;
+                    phone.PhoneType = phoneVm.PhoneType;
+                    phone.Extension = phoneVm.Extension;
+                }
+            }
+        }
+
+        private void UpdateAddresses(CustomerCompany company, List<AddressViewModel> addresses)
+        {
+            var toRemove = company.Addresses.Where(a => !addresses.Any(vm => vm.AddressId == a.AddressId)).ToList();
+            _context.Addresses.RemoveRange(toRemove);
+
+            foreach (var addressVm in addresses)
+            {
+                var address = company.Addresses.FirstOrDefault(a => a.AddressId == addressVm.AddressId);
+                if (address == null)
+                {
+                    company.Addresses.Add(new Address
+                    {
+                        FullAddress = addressVm.FullAddress,
+                        City = addressVm.City,
+                        Province = addressVm.Province,
+                        PostalCode = addressVm.PostalCode,
+                        AddressType = addressVm.AddressType
+                    });
+                }
+                else
+                {
+                    address.FullAddress = addressVm.FullAddress;
+                    address.City = addressVm.City;
+                    address.Province = addressVm.Province;
+                    address.PostalCode = addressVm.PostalCode;
+                    address.AddressType = addressVm.AddressType;
+                }
             }
         }
 
         private async Task AddEmailsAsync(int companyId, List<EmailViewModel> emails)
         {
             if (emails == null) return;
-
-            var validEmails = emails
-                .Where(e => !string.IsNullOrWhiteSpace(e.EmailAddress))
-                .Select(e => new Email
+            foreach (var email in emails)
+            {
+                var entity = new Email
                 {
                     CompanyCustomerId = companyId,
-                    EmailAddress = e.EmailAddress,
-                    EmailType = e.EmailType,
-                    IsPrimary = e.IsPrimary
-                }).ToList();
-
-            if (validEmails.Any())
-            {
-                _context.Emails.AddRange(validEmails);
-                await _context.SaveChangesAsync();
+                    EmailAddress = email.EmailAddress,
+                    EmailType = email.EmailType,
+                    IsPrimary = email.IsPrimary
+                };
+                _context.Emails.Add(entity);
             }
+            await _context.SaveChangesAsync();
         }
 
         private async Task AddPhonesAsync(int companyId, List<PhoneViewModel> phones)
         {
             if (phones == null) return;
-
-            var validPhones = phones
-                .Where(p => !string.IsNullOrWhiteSpace(p.PhoneNumber))
-                .Select(p => new ContactPhone
+            foreach (var phone in phones)
+            {
+                var entity = new ContactPhone
                 {
                     CompanyCustomerId = companyId,
-                    PhoneNumber = p.PhoneNumber,
-                    PhoneType = p.PhoneType,
-                    Extension = p.Extension
-                }).ToList();
-
-            if (validPhones.Any())
-            {
-                _context.ContactPhones.AddRange(validPhones);
-                await _context.SaveChangesAsync();
+                    PhoneNumber = phone.PhoneNumber,
+                    PhoneType = phone.PhoneType,
+                    Extension = phone.Extension
+                };
+                _context.ContactPhones.Add(entity);
             }
+            await _context.SaveChangesAsync();
         }
 
         private async Task AddAddressesAsync(int companyId, List<AddressViewModel> addresses)
         {
             if (addresses == null) return;
-
-            var validAddresses = addresses
-                .Where(a => !string.IsNullOrWhiteSpace(a.FullAddress))
-                .Select(a => new Address
+            foreach (var addr in addresses)
+            {
+                var entity = new Address
                 {
                     CompanyCustomerId = companyId,
-                    FullAddress = a.FullAddress,
-                    City = a.City,
-                    Province = a.Province,
-                    PostalCode = a.PostalCode,
-                    AddressType = a.AddressType
-                }).ToList();
-
-            if (validAddresses.Any())
-            {
-                _context.Addresses.AddRange(validAddresses);
-                await _context.SaveChangesAsync();
+                    FullAddress = addr.FullAddress,
+                    City = addr.City,
+                    Province = addr.Province,
+                    PostalCode = addr.PostalCode,
+                    AddressType = addr.AddressType
+                };
+                _context.Addresses.Add(entity);
             }
+            await _context.SaveChangesAsync();
         }
 
-        private void UpdateEmails(CustomerCompany company, List<EmailViewModel> updatedEmails)
-        {
-            if (updatedEmails == null) return;
-
-            var emailsToRemove = company.Emails.Where(e => updatedEmails.All(u => u.EmailId != e.EmailId)).ToList();
-            _context.Emails.RemoveRange(emailsToRemove);
-
-            foreach (var email in updatedEmails)
-            {
-                var existingEmail = company.Emails.FirstOrDefault(e => e.EmailId == email.EmailId);
-                if (existingEmail != null)
-                {
-                    existingEmail.EmailAddress = email.EmailAddress;
-                    existingEmail.EmailType = email.EmailType;
-                    existingEmail.IsPrimary = email.IsPrimary;
-                }
-                else
-                {
-                    company.Emails.Add(new Email
-                    {
-                        EmailAddress = email.EmailAddress,
-                        EmailType = email.EmailType,
-                        IsPrimary = email.IsPrimary
-                    });
-                }
-            }
-        }
-
-        private void UpdatePhones(CustomerCompany company, List<PhoneViewModel> updatedPhones)
-        {
-            if (updatedPhones == null) return;
-
-            var phonesToRemove = company.ContactPhones.Where(p => updatedPhones.All(u => u.PhoneId != p.PhoneId)).ToList();
-            _context.ContactPhones.RemoveRange(phonesToRemove);
-
-            foreach (var phone in updatedPhones)
-            {
-                var existingPhone = company.ContactPhones.FirstOrDefault(p => p.PhoneId == phone.PhoneId);
-                if (existingPhone != null)
-                {
-                    existingPhone.PhoneNumber = phone.PhoneNumber;
-                    existingPhone.PhoneType = phone.PhoneType;
-                    existingPhone.Extension = phone.Extension;
-                }
-                else
-                {
-                    company.ContactPhones.Add(new ContactPhone
-                    {
-                        PhoneNumber = phone.PhoneNumber,
-                        PhoneType = phone.PhoneType,
-                        Extension = phone.Extension
-                    });
-                }
-            }
-        }
-
-        private void UpdateAddresses(CustomerCompany company, List<AddressViewModel> updatedAddresses)
-        {
-            if (updatedAddresses == null) return;
-
-            var addressesToRemove = company.Addresses.Where(a => updatedAddresses.All(u => u.AddressId != a.AddressId)).ToList();
-            _context.Addresses.RemoveRange(addressesToRemove);
-
-            foreach (var address in updatedAddresses)
-            {
-                var existingAddress = company.Addresses.FirstOrDefault(a => a.AddressId == address.AddressId);
-                if (existingAddress != null)
-                {
-                    existingAddress.FullAddress = address.FullAddress;
-                    existingAddress.City = address.City;
-                    existingAddress.Province = address.Province;
-                    existingAddress.PostalCode = address.PostalCode;
-                    existingAddress.AddressType = address.AddressType;
-                }
-                else
-                {
-                    company.Addresses.Add(new Address
-                    {
-                        FullAddress = address.FullAddress,
-                        City = address.City,
-                        Province = address.Province,
-                        PostalCode = address.PostalCode,
-                        AddressType = address.AddressType
-                    });
-                }
-            }
-        }
+        #endregion
     }
 }

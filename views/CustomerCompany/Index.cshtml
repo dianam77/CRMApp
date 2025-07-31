@@ -1,6 +1,4 @@
 ﻿@using Microsoft.AspNetCore.Identity
-
-
 @model List<CRMApp.Models.CustomerCompany>
 
 <h2>لیست شرکت‌ها</h2>
@@ -24,6 +22,7 @@
             <th>ایمیل‌ها</th>
             <th>تلفن‌ها</th>
             <th>آدرس‌ها</th>
+            <th>روابط با مشتریان حقیقی</th>
             @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
             {
                 <th>عملیات</th>
@@ -43,21 +42,33 @@
                 <td>@item.IndustryField</td>
                 <td>@item.Website</td>
                 <td>
-                    @foreach (var email in item.Emails)
+                    @foreach (var email in item.Emails ?? new List<CRMApp.Models.Email>())
                     {
                         <div>@email.EmailAddress (@email.EmailType)</div>
                     }
                 </td>
                 <td>
-                    @foreach (var phone in item.ContactPhones)
+                    @foreach (var phone in item.ContactPhones ?? new List<CRMApp.Models.ContactPhone>())
                     {
                         <div>@phone.PhoneNumber (@phone.PhoneType)</div>
                     }
                 </td>
                 <td>
-                    @foreach (var address in item.Addresses)
+                    @foreach (var address in item.Addresses ?? new List<CRMApp.Models.Address>())
                     {
                         <div>@address.FullAddress - @address.City, @address.Province</div>
+                    }
+                </td>
+                <td>
+                    @foreach (var relation in item.CustomerCompanyRelations ?? new List<CRMApp.Models.CustomerCompanyRelation>())
+                    {
+                        <div class="mb-2">
+                            <strong>مشتری:</strong> @(relation.IndividualCustomer?.FirstName + " " + relation.IndividualCustomer?.LastName ?? "نامشخص") <br />
+                            <strong>نوع:</strong> @relation.RelationType <br />
+                            <strong>تاریخ:</strong> @(relation.StartDate?.ToString("yyyy/MM/dd") ?? "-") <br />
+                            <strong>توضیح:</strong> @relation.Description
+                        </div>
+                        <hr />
                     }
                 </td>
                 @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
@@ -71,4 +82,3 @@
         }
     </tbody>
 </table>
-

@@ -12,8 +12,9 @@ namespace CRMApp.Models
         public int CompanyCustomerId { get; set; }
         public CustomerCompany CompanyCustomer { get; set; }
 
-        public string RelationType { get; set; }
+        public string? RelationType { get; set; }
         public DateTime? StartDate { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
     }
 }
+

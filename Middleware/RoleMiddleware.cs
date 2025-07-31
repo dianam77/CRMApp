@@ -23,7 +23,6 @@ namespace CRM_Project.Middleware
                     .Select(c => c.Value)
                     .ToList();
 
-                // ذخیره نقش‌های کاربر در context برای استفاده در مراحل بعدی
                 context.Items["UserRoles"] = roles;
             }
 

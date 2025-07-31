@@ -6,10 +6,11 @@ using CRMApp.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CRMApp.Controllers
 {
-    // به طور کلی فقط Admin و Manager اجازه دسترسی به اکشن‌های غیر از Index دارند
     [Authorize(Roles = "Admin,Manager")]
     public class CustomerIndividualController : Controller
     {
@@ -20,10 +21,8 @@ namespace CRMApp.Controllers
             _context = context;
         }
 
-        // فقط این اکشن باز است برای User هم
         [AllowAnonymous]
         [Authorize(Roles = "Admin,Manager,User")]
-        // GET: /CustomerIndividual/Index
         public async Task<IActionResult> Index()
         {
             var individuals = await _context.CustomerIndividuals
@@ -35,23 +34,39 @@ namespace CRMApp.Controllers
             return View(individuals);
         }
 
-        // GET: /CustomerIndividual/Create
+        // GET: Create
         public IActionResult Create()
         {
             var vm = new CustomerIndividualViewModel
             {
-                Emails = new System.Collections.Generic.List<EmailViewModel> { new EmailViewModel() },
-                ContactPhones = new System.Collections.Generic.List<PhoneViewModel> { new PhoneViewModel() },
-                Addresses = new System.Collections.Generic.List<AddressViewModel> { new AddressViewModel() }
+                Emails = new List<EmailViewModel> { new EmailViewModel() },
+                ContactPhones = new List<PhoneViewModel> { new PhoneViewModel() },
+                Addresses = new List<AddressViewModel> { new AddressViewModel() },
+                GenderList = GetGenderList(),
+                MaritalStatusList = GetMaritalStatusList()
             };
+
             return View(vm);
         }
 
-        // POST: /CustomerIndividual/Create
+        // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CustomerIndividualViewModel vm)
         {
+            // حذف آیتم‌های خالی از لیست‌ها قبل از اعتبارسنجی
+            vm.Emails = vm.Emails?.Where(e => !string.IsNullOrWhiteSpace(e.EmailAddress)).ToList() ?? new List<EmailViewModel>();
+            vm.ContactPhones = vm.ContactPhones?.Where(p => !string.IsNullOrWhiteSpace(p.PhoneNumber)).ToList() ?? new List<PhoneViewModel>();
+            vm.Addresses = vm.Addresses?.Where(a => !string.IsNullOrWhiteSpace(a.FullAddress)).ToList() ?? new List<AddressViewModel>();
+
+            // پاک کردن ModelState برای آیتم‌های حذف شده
+            ClearModelStateForList(nameof(vm.Emails), vm.Emails.Count);
+            ClearModelStateForList(nameof(vm.ContactPhones), vm.ContactPhones.Count);
+            ClearModelStateForList(nameof(vm.Addresses), vm.Addresses.Count);
+
+            vm.GenderList = GetGenderList();
+            vm.MaritalStatusList = GetMaritalStatusList();
+
             if (!ModelState.IsValid)
                 return View(vm);
 
@@ -76,8 +91,7 @@ namespace CRMApp.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-        // GET: /CustomerIndividual/Edit/5
+        // GET: Edit
         public async Task<IActionResult> Edit(int id)
         {
             var individual = await _context.CustomerIndividuals
@@ -100,21 +114,24 @@ namespace CRMApp.Controllers
                 IdentityNumber = individual.IdentityNumber,
                 Gender = individual.Gender,
                 MaritalStatus = individual.MaritalStatus,
-                Emails = individual.Emails.Select(e => new EmailViewModel
+
+                Emails = individual.Emails?.Select(e => new EmailViewModel
                 {
                     EmailId = e.EmailId,
                     EmailAddress = e.EmailAddress,
                     EmailType = e.EmailType,
                     IsPrimary = e.IsPrimary
-                }).ToList(),
-                ContactPhones = individual.ContactPhones.Select(p => new PhoneViewModel
+                }).ToList() ?? new List<EmailViewModel>(),
+
+                ContactPhones = individual.ContactPhones?.Select(p => new PhoneViewModel
                 {
                     PhoneId = p.PhoneId,
                     PhoneNumber = p.PhoneNumber,
                     PhoneType = p.PhoneType,
                     Extension = p.Extension
-                }).ToList(),
-                Addresses = individual.Addresses.Select(a => new AddressViewModel
+                }).ToList() ?? new List<PhoneViewModel>(),
+
+                Addresses = individual.Addresses?.Select(a => new AddressViewModel
                 {
                     AddressId = a.AddressId,
                     FullAddress = a.FullAddress,
@@ -122,19 +139,48 @@ namespace CRMApp.Controllers
                     Province = a.Province,
                     PostalCode = a.PostalCode,
                     AddressType = a.AddressType
-                }).ToList()
+                }).ToList() ?? new List<AddressViewModel>(),
+
+                GenderList = GetGenderList(),
+                MaritalStatusList = GetMaritalStatusList()
             };
+
+            // ✅ اضافه کردن ردیف خالی در صورت نبود داده برای نمایش در فرم
+            if (!vm.Emails.Any())
+                vm.Emails.Add(new EmailViewModel());
+
+            if (!vm.ContactPhones.Any())
+                vm.ContactPhones.Add(new PhoneViewModel());
+
+            if (!vm.Addresses.Any())
+                vm.Addresses.Add(new AddressViewModel());
 
             return View(vm);
         }
 
-        // POST: /CustomerIndividual/Edit/5
+
+
+        /// POST: Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, CustomerIndividualViewModel vm)
         {
             if (id != vm.CustomerId)
                 return NotFound();
+
+            // حذف مقادیر خالی
+            vm.Emails = vm.Emails?.Where(e => !string.IsNullOrWhiteSpace(e.EmailAddress)).ToList() ?? new List<EmailViewModel>();
+            vm.ContactPhones = vm.ContactPhones?.Where(p => !string.IsNullOrWhiteSpace(p.PhoneNumber)).ToList() ?? new List<PhoneViewModel>();
+            vm.Addresses = vm.Addresses?.Where(a => !string.IsNullOrWhiteSpace(a.FullAddress)).ToList() ?? new List<AddressViewModel>();
+
+            // پاک‌سازی ModelState برای مقادیر حذف شده
+            ClearModelStateForList(nameof(vm.Emails), vm.Emails.Count);
+            ClearModelStateForList(nameof(vm.ContactPhones), vm.ContactPhones.Count);
+            ClearModelStateForList(nameof(vm.Addresses), vm.Addresses.Count);
+
+            // تنظیم مجدد لیست‌های DropDown
+            vm.GenderList = GetGenderList();
+            vm.MaritalStatusList = GetMaritalStatusList();
 
             if (!ModelState.IsValid)
                 return View(vm);
@@ -148,6 +194,7 @@ namespace CRMApp.Controllers
             if (existing == null)
                 return NotFound();
 
+            // به‌روزرسانی مشخصات فردی
             existing.FirstName = vm.FirstName;
             existing.LastName = vm.LastName;
             existing.FatherName = vm.FatherName;
@@ -157,6 +204,7 @@ namespace CRMApp.Controllers
             existing.Gender = vm.Gender;
             existing.MaritalStatus = vm.MaritalStatus;
 
+            // به‌روزرسانی لیست‌های فرزند
             UpdateEmails(existing, vm.Emails);
             UpdatePhones(existing, vm.ContactPhones);
             UpdateAddresses(existing, vm.Addresses);
@@ -166,7 +214,7 @@ namespace CRMApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /CustomerIndividual/Delete/5
+        // GET: Delete
         public async Task<IActionResult> Delete(int id)
         {
             var individual = await _context.CustomerIndividuals.FindAsync(id);
@@ -176,7 +224,7 @@ namespace CRMApp.Controllers
             return View(individual);
         }
 
-        // POST: /CustomerIndividual/Delete/5
+        // POST: Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -201,10 +249,31 @@ namespace CRMApp.Controllers
                 _context.CustomerIndividuals.Remove(individual);
                 await _context.SaveChangesAsync();
             }
+
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task AddEmailsAsync(int individualId, System.Collections.Generic.List<EmailViewModel> emails)
+        #region Helpers
+
+        private List<SelectListItem> GetGenderList()
+        {
+            return new List<SelectListItem>
+            {
+                new SelectListItem { Value = "مرد", Text = "مرد" },
+                new SelectListItem { Value = "زن", Text = "زن" }
+            };
+        }
+
+        private List<SelectListItem> GetMaritalStatusList()
+        {
+            return new List<SelectListItem>
+            {
+                new SelectListItem { Value = "مجرد", Text = "مجرد" },
+                new SelectListItem { Value = "متاهل", Text = "متاهل" }
+            };
+        }
+
+        private async Task AddEmailsAsync(int individualId, List<EmailViewModel> emails)
         {
             var validEmails = emails?
                 .Where(e => !string.IsNullOrWhiteSpace(e.EmailAddress))
@@ -223,7 +292,7 @@ namespace CRMApp.Controllers
             }
         }
 
-        private async Task AddPhonesAsync(int individualId, System.Collections.Generic.List<PhoneViewModel> phones)
+        private async Task AddPhonesAsync(int individualId, List<PhoneViewModel> phones)
         {
             var validPhones = phones?
                 .Where(p => !string.IsNullOrWhiteSpace(p.PhoneNumber))
@@ -242,18 +311,18 @@ namespace CRMApp.Controllers
             }
         }
 
-        private async Task AddAddressesAsync(int individualId, System.Collections.Generic.List<AddressViewModel> addresses)
+        private async Task AddAddressesAsync(int individualId, List<AddressViewModel> addresses)
         {
             var validAddresses = addresses?
                 .Where(a => !string.IsNullOrWhiteSpace(a.FullAddress))
                 .Select(a => new Address
                 {
                     IndividualCustomerId = individualId,
-                    FullAddress = a.FullAddress,
-                    City = a.City,
+                    AddressType = a.AddressType,
                     Province = a.Province,
+                    City = a.City,
                     PostalCode = a.PostalCode,
-                    AddressType = a.AddressType
+                    FullAddress = a.FullAddress
                 }).ToList();
 
             if (validAddresses?.Any() == true)
@@ -263,92 +332,118 @@ namespace CRMApp.Controllers
             }
         }
 
-        private void UpdateEmails(CustomerIndividual individual, System.Collections.Generic.List<EmailViewModel> updatedEmails)
+        private void UpdateEmails(CustomerIndividual existing, List<EmailViewModel> emails)
         {
-            if (updatedEmails == null) return;
+            // حذف ایمیل‌هایی که دیگر وجود ندارند
+            var toRemove = existing.Emails.Where(e => !emails.Any(vm => vm.EmailId == e.EmailId)).ToList();
+            _context.Emails.RemoveRange(toRemove);
 
-            var emailsToRemove = individual.Emails.Where(e => !updatedEmails.Any(u => u.EmailId == e.EmailId)).ToList();
-            _context.Emails.RemoveRange(emailsToRemove);
-
-            foreach (var email in updatedEmails)
+            // افزودن و یا به‌روزرسانی ایمیل‌ها
+            foreach (var vm in emails)
             {
-                var existingEmail = individual.Emails.FirstOrDefault(e => e.EmailId == email.EmailId);
-                if (existingEmail != null)
+                var email = existing.Emails.FirstOrDefault(e => e.EmailId == vm.EmailId);
+                if (email == null)
                 {
-                    existingEmail.EmailAddress = email.EmailAddress;
-                    existingEmail.EmailType = email.EmailType;
-                    existingEmail.IsPrimary = email.IsPrimary;
+                    existing.Emails.Add(new Email
+                    {
+                        IndividualCustomerId = existing.CustomerId,
+                        EmailAddress = vm.EmailAddress,
+                        EmailType = vm.EmailType,
+                        IsPrimary = vm.IsPrimary
+                    });
                 }
                 else
                 {
-                    individual.Emails.Add(new Email
-                    {
-                        EmailAddress = email.EmailAddress,
-                        EmailType = email.EmailType,
-                        IsPrimary = email.IsPrimary
-                    });
+                    email.EmailAddress = vm.EmailAddress;
+                    email.EmailType = vm.EmailType;
+                    email.IsPrimary = vm.IsPrimary;
                 }
             }
         }
 
-        private void UpdatePhones(CustomerIndividual individual, System.Collections.Generic.List<PhoneViewModel> updatedPhones)
+        private void UpdatePhones(CustomerIndividual existing, List<PhoneViewModel> phones)
         {
-            if (updatedPhones == null) return;
+            var toRemove = existing.ContactPhones.Where(p => !phones.Any(vm => vm.PhoneId == p.PhoneId)).ToList();
+            _context.ContactPhones.RemoveRange(toRemove);
 
-            var phonesToRemove = individual.ContactPhones.Where(p => !updatedPhones.Any(u => u.PhoneId == p.PhoneId)).ToList();
-            _context.ContactPhones.RemoveRange(phonesToRemove);
-
-            foreach (var phone in updatedPhones)
+            foreach (var vm in phones)
             {
-                var existingPhone = individual.ContactPhones.FirstOrDefault(p => p.PhoneId == phone.PhoneId);
-                if (existingPhone != null)
+                var phone = existing.ContactPhones.FirstOrDefault(p => p.PhoneId == vm.PhoneId);
+                if (phone == null)
                 {
-                    existingPhone.PhoneNumber = phone.PhoneNumber;
-                    existingPhone.PhoneType = phone.PhoneType;
-                    existingPhone.Extension = phone.Extension;
+                    existing.ContactPhones.Add(new ContactPhone
+                    {
+                        IndividualCustomerId = existing.CustomerId,
+                        PhoneNumber = vm.PhoneNumber,
+                        PhoneType = vm.PhoneType,
+                        Extension = vm.Extension
+                    });
                 }
                 else
                 {
-                    individual.ContactPhones.Add(new ContactPhone
-                    {
-                        PhoneNumber = phone.PhoneNumber,
-                        PhoneType = phone.PhoneType,
-                        Extension = phone.Extension
-                    });
+                    phone.PhoneNumber = vm.PhoneNumber;
+                    phone.PhoneType = vm.PhoneType;
+                    phone.Extension = vm.Extension;
                 }
             }
         }
 
-        private void UpdateAddresses(CustomerIndividual individual, System.Collections.Generic.List<AddressViewModel> updatedAddresses)
+        private void UpdateAddresses(CustomerIndividual existing, List<AddressViewModel> addresses)
         {
-            if (updatedAddresses == null) return;
+            var toRemove = existing.Addresses.Where(a => !addresses.Any(vm => vm.AddressId == a.AddressId)).ToList();
+            _context.Addresses.RemoveRange(toRemove);
 
-            var addressesToRemove = individual.Addresses.Where(a => !updatedAddresses.Any(u => u.AddressId == a.AddressId)).ToList();
-            _context.Addresses.RemoveRange(addressesToRemove);
-
-            foreach (var address in updatedAddresses)
+            foreach (var vm in addresses)
             {
-                var existingAddress = individual.Addresses.FirstOrDefault(a => a.AddressId == address.AddressId);
-                if (existingAddress != null)
+                var addr = existing.Addresses.FirstOrDefault(a => a.AddressId == vm.AddressId);
+                if (addr == null)
                 {
-                    existingAddress.FullAddress = address.FullAddress;
-                    existingAddress.City = address.City;
-                    existingAddress.Province = address.Province;
-                    existingAddress.PostalCode = address.PostalCode;
-                    existingAddress.AddressType = address.AddressType;
+                    existing.Addresses.Add(new Address
+                    {
+                        IndividualCustomerId = existing.CustomerId,
+                        AddressType = vm.AddressType,
+                        Province = vm.Province,
+                        City = vm.City,
+                        PostalCode = vm.PostalCode,
+                        FullAddress = vm.FullAddress
+                    });
                 }
                 else
                 {
-                    individual.Addresses.Add(new Address
-                    {
-                        FullAddress = address.FullAddress,
-                        City = address.City,
-                        Province = address.Province,
-                        PostalCode = address.PostalCode,
-                        AddressType = address.AddressType
-                    });
+                    addr.AddressType = vm.AddressType;
+                    addr.Province = vm.Province;
+                    addr.City = vm.City;
+                    addr.PostalCode = vm.PostalCode;
+                    addr.FullAddress = vm.FullAddress;
                 }
             }
         }
+
+        private void ClearModelStateForList(string propertyName, int validItemCount)
+        {
+            var keysToRemove = ModelState.Keys
+                .Where(k => k.StartsWith(propertyName + "["))
+                .Where(k =>
+                {
+                    var start = k.IndexOf('[') + 1;
+                    var end = k.IndexOf(']');
+                    if (start >= 0 && end > start)
+                    {
+                        var indexStr = k.Substring(start, end - start);
+                        if (int.TryParse(indexStr, out int index))
+                        {
+                            return index >= validItemCount;
+                        }
+                    }
+                    return false;
+                }).ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                ModelState.Remove(key);
+            }
+        }
+
+        #endregion
     }
 }

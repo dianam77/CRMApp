@@ -1,16 +1,17 @@
-﻿@model IEnumerable<CRMApp.Models.Role>
+﻿@model IEnumerable<CRMApp.Models.ApplicationRole>
 
 @{
     ViewData["Title"] = "مدیریت نقش‌ها";
 }
 
-<h2>مدیریت نقش‌ها</h2>
+<h2>@ViewData["Title"]</h2>
 
 <table class="table table-bordered">
     <thead>
         <tr>
             <th>نام نقش</th>
-            <th>نام کاربران</th>
+            <th>کاربران</th>
+            <th>عملیات</th>
         </tr>
     </thead>
     <tbody>
@@ -21,17 +22,18 @@
                 <td>
                     @if (role.UserRoles != null && role.UserRoles.Any())
                     {
-                        <ul>
-                            @foreach (var userRole in role.UserRoles)
-                            {
-                                <li>@userRole.User.Username</li>
-                            }
-                        </ul>
+                        foreach (var userRole in role.UserRoles)
+                        {
+                            @userRole.User.UserName <br />
+                        }
                     }
                     else
                     {
-                        <span>هیچ کاربری در این نقش نیست</span>
+                        <em>هیچ کاربری مرتبط نیست</em>
                     }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@role.Id" class="btn btn-primary btn-sm">ویرایش</a>
                 </td>
             </tr>
         }

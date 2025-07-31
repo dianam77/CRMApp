@@ -5,7 +5,9 @@ using CRMApp.Models;
 using CRMApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CRMApp.Controllers
 {
@@ -21,50 +23,57 @@ namespace CRMApp.Controllers
             _context = context;
             _tokenService = tokenService;
         }
+
         [HttpPost("register")]
         [Authorize]
-        public IActionResult Register(RegisterDto dto)
+        public async Task<IActionResult> Register(RegisterDto dto)
         {
-            if (_context.Users.Any(u => u.Username == dto.Username))
+            if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest("Username and Password are required.");
+
+            if (await _context.Users.AnyAsync(u => u.UserName == dto.Username))
                 return BadRequest("Username already exists.");
 
-            var user = new User
+            var user = new ApplicationUser
             {
-                Username = dto.Username,
+                UserName = dto.Username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
             };
 
-            _context.Users.Add(user);
-            _context.SaveChanges();
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
 
-            var role = _context.Roles.FirstOrDefault(r => r.Name == dto.RoleName);
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == dto.RoleName);
             if (role == null)
-            {
                 return BadRequest("Role not found.");
-            }
 
-            _context.UserRoles.Add(new UserRole
+            var userRole = new UserRole
             {
                 UserId = user.Id,
                 RoleId = role.Id
-            });
+            };
 
-            _context.SaveChanges();
+            await _context.UserRoles.AddAsync(userRole);
+            await _context.SaveChangesAsync();
 
             return Ok("User registered and role assigned.");
         }
 
         [HttpPost("login")]
-        public IActionResult Login(LoginDto dto)
+        [AllowAnonymous]
+        public async Task<IActionResult> Login(LoginDto dto)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Username == dto.Username);
+            if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest("Username and Password are required.");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == dto.Username);
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized("Invalid credentials.");
 
-            var roles = _context.UserRoles
+            var roles = await _context.UserRoles
                 .Where(ur => ur.UserId == user.Id)
                 .Select(ur => ur.Role.Name)
-                .ToList();
+                .ToListAsync();
 
             var token = _tokenService.GenerateToken(user, roles);
 

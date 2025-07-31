@@ -4,39 +4,40 @@
     ViewData["Title"] = "ثبت نام کاربر جدید";
 }
 
-<h2>ثبت نام کاربر جدید</h2>
+<h2>@ViewData["Title"]</h2>
 
 <form asp-action="Register" method="post">
     <div asp-validation-summary="All" class="text-danger"></div>
 
-    <div class="form-group">
-        <label asp-for="Username">نام کاربری</label>
+    <div class="form-group mb-3">
+        <label asp-for="Username" class="form-label">نام کاربری</label>
         <input asp-for="Username" class="form-control" />
         <span asp-validation-for="Username" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Password">رمز عبور</label>
+    <div class="form-group mb-3">
+        <label asp-for="Password" class="form-label">رمز عبور</label>
         <input asp-for="Password" type="password" class="form-control" />
         <span asp-validation-for="Password" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="RoleName">نقش</label>
-        <select asp-for="RoleName" class="form-control">
+    <div class="form-group mb-3">
+        <label asp-for="Email" class="form-label">ایمیل</label>
+        <input asp-for="Email" type="email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="RoleName" class="form-label">نقش</label>
+        <select asp-for="RoleName" class="form-select">
             <option value="">انتخاب نقش</option>
             @{
                 var roles = new List<string> { "Admin", "Manager", "User" };
                 foreach (var role in roles)
                 {
-                    if (Model.RoleName == role)
-                    {
-                        <option value="@role" selected>@role</option>
-                    }
-                    else
-                    {
-                        <option value="@role">@role</option>
-                    }
+                    <option value="@role" selected="@(Model.RoleName == role ? "selected" : null)">
+                        @role
+                    </option>
                 }
             }
         </select>
@@ -47,7 +48,5 @@
 </form>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

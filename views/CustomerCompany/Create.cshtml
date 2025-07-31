@@ -8,36 +8,44 @@
     <div>
         <label>نام شرکت:</label>
         <input asp-for="CompanyName" required />
+        <span asp-validation-for="CompanyName" class="text-danger"></span>
     </div>
 
     <div>
         <label>کد اقتصادی:</label>
-        <input asp-for="EconomicCode" />
+        <input asp-for="EconomicCode" value="@(Model.EconomicCode ?? "")" />
+        <span asp-validation-for="EconomicCode" class="text-danger"></span>
     </div>
 
     <div>
         <label>شناسه ملی:</label>
-        <input asp-for="NationalId" />
+        <input asp-for="NationalId" value="@(Model.NationalId ?? "")" />
+        <span asp-validation-for="NationalId" class="text-danger"></span>
     </div>
 
     <div>
         <label>شماره ثبت:</label>
-        <input asp-for="RegisterNumber" />
+        <input asp-for="RegisterNumber" value="@(Model.RegisterNumber ?? "")" />
+        <span asp-validation-for="RegisterNumber" class="text-danger"></span>
     </div>
 
     <div>
         <label>تاریخ تأسیس:</label>
-        <input asp-for="EstablishmentDate" type="date" />
+        <input asp-for="EstablishmentDate" type="date"
+               value="@(Model.EstablishmentDate.HasValue? Model.EstablishmentDate.Value.ToString("yyyy-MM-dd") : "")" />
+        <span asp-validation-for="EstablishmentDate" class="text-danger"></span>
     </div>
 
     <div>
         <label>حوزه فعالیت:</label>
-        <input asp-for="IndustryField" />
+        <input asp-for="IndustryField" value="@(Model.IndustryField ?? "")" />
+        <span asp-validation-for="IndustryField" class="text-danger"></span>
     </div>
 
     <div>
         <label>وبسایت:</label>
-        <input asp-for="Website" />
+        <input asp-for="Website" value="@(Model.Website ?? "")" />
+        <span asp-validation-for="Website" class="text-danger"></span>
     </div>
 
     <div>
@@ -45,32 +53,43 @@
         <select asp-for="SelectedIndividualCustomerId" asp-items="@(new SelectList(Model.IndividualCustomers, "CustomerId", "FullName"))">
             <option value="">انتخاب کنید</option>
         </select>
+        <span asp-validation-for="SelectedIndividualCustomerId" class="text-danger"></span>
     </div>
 
     <div>
         <label>نوع رابطه:</label>
-        <input asp-for="RelationType" />
+        <input asp-for="RelationType" value="@(Model.RelationType ?? "")" />
+        <span asp-validation-for="RelationType" class="text-danger"></span>
     </div>
 
     <div>
         <label>تاریخ شروع رابطه:</label>
-        <input asp-for="RelationStartDate" type="date" />
+        <input asp-for="RelationStartDate" type="date"
+               value="@(Model.RelationStartDate.HasValue? Model.RelationStartDate.Value.ToString("yyyy-MM-dd") : "")" />
+        <span asp-validation-for="RelationStartDate" class="text-danger"></span>
     </div>
 
     <div>
         <label>توضیحات رابطه:</label>
-        <textarea asp-for="RelationDescription"></textarea>
+        <textarea asp-for="RelationDescription">@(Model.RelationDescription ?? "")</textarea>
+        <span asp-validation-for="RelationDescription" class="text-danger"></span>
     </div>
 
     <h3>ایمیل‌ها</h3>
     <table>
-        <thead><tr><th>ایمیل</th><th>نوع</th><th>اصلی</th></tr></thead>
+        <thead>
+            <tr>
+                <th>ایمیل</th>
+                <th>نوع</th>
+                <th>اصلی</th>
+            </tr>
+        </thead>
         <tbody>
             @for (int i = 0; i < Model.Emails.Count; i++)
             {
                 <tr>
-                    <td><input asp-for="Emails[@i].EmailAddress" /></td>
-                    <td><input asp-for="Emails[@i].EmailType" /></td>
+                    <td><input asp-for="Emails[@i].EmailAddress" value="@(Model.Emails[i].EmailAddress ?? "")" /></td>
+                    <td><input asp-for="Emails[@i].EmailType" value="@(Model.Emails[i].EmailType ?? "")" /></td>
                     <td><input asp-for="Emails[@i].IsPrimary" type="checkbox" /></td>
                 </tr>
             }
@@ -79,14 +98,20 @@
 
     <h3>تلفن‌ها</h3>
     <table>
-        <thead><tr><th>شماره</th><th>نوع</th><th>داخلی</th></tr></thead>
+        <thead>
+            <tr>
+                <th>شماره</th>
+                <th>نوع</th>
+                <th>داخلی</th>
+            </tr>
+        </thead>
         <tbody>
             @for (int i = 0; i < Model.ContactPhones.Count; i++)
             {
                 <tr>
-                    <td><input asp-for="ContactPhones[@i].PhoneNumber" /></td>
-                    <td><input asp-for="ContactPhones[@i].PhoneType" /></td>
-                    <td><input asp-for="ContactPhones[@i].Extension" /></td>
+                    <td><input asp-for="ContactPhones[@i].PhoneNumber" value="@(Model.ContactPhones[i].PhoneNumber ?? "")" /></td>
+                    <td><input asp-for="ContactPhones[@i].PhoneType" value="@(Model.ContactPhones[i].PhoneType ?? "")" /></td>
+                    <td><input asp-for="ContactPhones[@i].Extension" value="@(Model.ContactPhones[i].Extension ?? "")" /></td>
                 </tr>
             }
         </tbody>
@@ -94,16 +119,24 @@
 
     <h3>آدرس‌ها</h3>
     <table>
-        <thead><tr><th>آدرس</th><th>شهر</th><th>استان</th><th>کدپستی</th><th>نوع</th></tr></thead>
+        <thead>
+            <tr>
+                <th>آدرس</th>
+                <th>شهر</th>
+                <th>استان</th>
+                <th>کدپستی</th>
+                <th>نوع</th>
+            </tr>
+        </thead>
         <tbody>
             @for (int i = 0; i < Model.Addresses.Count; i++)
             {
                 <tr>
-                    <td><input asp-for="Addresses[@i].FullAddress" /></td>
-                    <td><input asp-for="Addresses[@i].City" /></td>
-                    <td><input asp-for="Addresses[@i].Province" /></td>
-                    <td><input asp-for="Addresses[@i].PostalCode" /></td>
-                    <td><input asp-for="Addresses[@i].AddressType" /></td>
+                    <td><input asp-for="Addresses[@i].FullAddress" value="@(Model.Addresses[i].FullAddress ?? "")" /></td>
+                    <td><input asp-for="Addresses[@i].City" value="@(Model.Addresses[i].City ?? "")" /></td>
+                    <td><input asp-for="Addresses[@i].Province" value="@(Model.Addresses[i].Province ?? "")" /></td>
+                    <td><input asp-for="Addresses[@i].PostalCode" value="@(Model.Addresses[i].PostalCode ?? "")" /></td>
+                    <td><input asp-for="Addresses[@i].AddressType" value="@(Model.Addresses[i].AddressType ?? "")" /></td>
                 </tr>
             }
         </tbody>
@@ -111,3 +144,7 @@
 
     <button type="submit">ثبت شرکت</button>
 </form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

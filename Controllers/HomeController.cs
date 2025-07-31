@@ -2,13 +2,10 @@
 using CRMApp.Data;
 using CRMApp.DTOs;
 using CRMApp.Models;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace CRMApp.Controllers
@@ -16,13 +13,20 @@ namespace CRMApp.Controllers
     public class HomeController : Controller
     {
         private readonly CRMAppDbContext _dbContext;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public HomeController(CRMAppDbContext dbContext)
+        public HomeController(
+            CRMAppDbContext dbContext,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager)
         {
             _dbContext = dbContext;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
-        // GET: نمایش فرم ورود
+        // GET: فرم ورود
         [HttpGet]
         public IActionResult Index()
         {
@@ -37,98 +41,67 @@ namespace CRMApp.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var user = await _dbContext.Users
-                .Include(u => u.UserRoles)
-                .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.Username == model.Username);
+            var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, isPersistent: true, lockoutOnFailure: false);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
+            if (!result.Succeeded)
             {
                 ModelState.AddModelError(string.Empty, "نام کاربری یا رمز عبور اشتباه است");
                 return View(model);
             }
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
-            };
-
-            foreach (var userRole in user.UserRoles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
-            }
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true
-            };
-
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity), authProperties);
-
             return RedirectToAction("Dashboard");
         }
 
-        // GET: فرم ثبت نام (فقط ادمین)
+        // GET: فرم ثبت نام
         [HttpGet]
-        [Authorize(Roles = RoleNames.Admin)]
-        public async Task<IActionResult> Register()
+        public IActionResult Register()
         {
-            var roles = await _dbContext.Roles.ToListAsync();
-            ViewBag.Roles = roles;
-            return View(new RegisterDto()); // جلوگیری از NullReference
+            return View(new RegisterDto());
         }
 
-        // POST: ثبت نام (فقط ادمین)
+        // POST: ثبت نام کاربر جدید
         [HttpPost]
-        [Authorize(Roles = RoleNames.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterDto model)
         {
-            var roles = await _dbContext.Roles.ToListAsync();
-            ViewBag.Roles = roles;
-
             if (!ModelState.IsValid)
                 return View(model);
 
-            if (await _dbContext.Users.AnyAsync(u => u.Username == model.Username))
+            if (await _userManager.FindByNameAsync(model.Username) != null)
             {
-                ModelState.AddModelError(string.Empty, "نام کاربری قبلا ثبت شده است");
+                ModelState.AddModelError("", "نام کاربری از قبل وجود دارد.");
                 return View(model);
             }
 
             var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == model.RoleName);
             if (role == null)
             {
-                ModelState.AddModelError(string.Empty, "نقش انتخاب شده معتبر نیست");
+                ModelState.AddModelError("", "نقش انتخاب شده معتبر نیست.");
                 return View(model);
             }
 
-            var user = new User
+            var user = new ApplicationUser
             {
-                Username = model.Username,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password)
+                UserName = model.Username,
+                Email = model.Email  // مطمئن شوید مدل RegisterDto این فیلد را دارد
             };
 
-            await _dbContext.Users.AddAsync(user);
-            await _dbContext.SaveChangesAsync();
+            var createResult = await _userManager.CreateAsync(user, model.Password);
 
-            var userRole = new UserRole
+            if (!createResult.Succeeded)
             {
-                UserId = user.Id,
-                RoleId = role.Id
-            };
+                foreach (var error in createResult.Errors)
+                    ModelState.AddModelError("", error.Description);
 
-            await _dbContext.UserRoles.AddAsync(userRole);
-            await _dbContext.SaveChangesAsync();
+                return View(model);
+            }
+
+            await _userManager.AddToRoleAsync(user, role.Name);
 
             return RedirectToAction("Index");
         }
 
-        // GET: داشبورد
+        // GET: داشبورد (نیاز به احراز هویت دارد)
         [HttpGet]
         [Authorize]
         public IActionResult Dashboard()
@@ -141,7 +114,7 @@ namespace CRMApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await _signInManager.SignOutAsync();
             return RedirectToAction("Index");
         }
     }

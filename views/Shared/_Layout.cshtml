@@ -1,13 +1,55 @@
-﻿<!-- در فایل Layout (مثلاً _Layout.cshtml) -->
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
 <head>
-    <link rel="stylesheet" href="~/css/site.css" />
-</head>
-<body>
-    @RenderBody()
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - داشبورد</title>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+    <!-- CoreUI CSS -->
+    <link href="~/lib/coreui/vendors/simplebar/css/simplebar.css" rel="stylesheet" />
+    <link href="~/lib/coreui/css/coreui.rtl.min.css" rel="stylesheet" />
+    <link href="~/lib/coreui/css/style.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" />
+</head>
+
+<body class="c-app">
+
+    <!-- Sidebar -->
+    <div class="c-sidebar c-sidebar-dark c-sidebar-fixed c-sidebar-lg-show" id="sidebar">
+        <!-- Sidebar brand and nav here -->
+        @* نمونه از فایل index.html کپی شود *@
+    </div>
+
+    <!-- Wrapper -->
+    <div class="c-wrapper">
+        <!-- Header -->
+        <header class="c-header c-header-light c-header-fixed">
+            @* نمونه هدر از index.html *@
+        </header>
+
+        <!-- Main -->
+        <div class="c-body">
+            <main class="c-main">
+                <div class="container-fluid px-4">
+                    @RenderBody()
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="c-footer">
+            <div><a href="https://coreui.io">CoreUI</a> © 2024 creativeLabs.</div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/coreui/vendors/simplebar/js/simplebar.min.js"></script>
+    <script src="~/lib/coreui/js/coreui.bundle.min.js"></script>
+    <script src="~/lib/coreui/js/coreui-utils.js"></script>
 
     @RenderSection("Scripts", required: false)
 </body>
+</html>

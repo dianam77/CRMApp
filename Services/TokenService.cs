@@ -2,7 +2,10 @@
 using CRMApp.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
@@ -23,7 +26,7 @@ namespace CRMApp.Services
             _context = context;
         }
 
-        public string GenerateToken(User user, IEnumerable<string> roles)
+        public string GenerateToken(ApplicationUser user, IEnumerable<string> roles)
         {
             var finalRoles = roles.ToList();
 
@@ -34,7 +37,7 @@ namespace CRMApp.Services
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Name, user.UserName),             // توجه به UserName بجای Username
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
@@ -55,3 +58,4 @@ namespace CRMApp.Services
         }
     }
 }
+

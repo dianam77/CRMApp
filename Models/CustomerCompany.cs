@@ -7,12 +7,12 @@ namespace CRMApp.Models
     {
         public int CustomerId { get; set; }
         public string CompanyName { get; set; }
-        public string EconomicCode { get; set; }
-        public string NationalId { get; set; }
-        public string RegisterNumber { get; set; }
+        public string? EconomicCode { get; set; }
+        public string? NationalId { get; set; }
+        public string? RegisterNumber { get; set; }
         public DateTime? EstablishmentDate { get; set; }
-        public string IndustryField { get; set; }
-        public string Website { get; set; }
+        public string? IndustryField { get; set; }
+        public string? Website { get; set; }
 
         public List<CustomerCompanyRelation> CustomerCompanyRelations { get; set; } = new List<CustomerCompanyRelation>();
         public List<Address> Addresses { get; set; } = new List<Address>();
